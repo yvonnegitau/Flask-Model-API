@@ -5,15 +5,31 @@ import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
 import json
-
+import requests
 app = Flask(__name__)
 
 
-@app.route('/')
+@app.route('/', methods=['post', 'get'])
 def index():
-    feature = 'Bar'
-    bar = create_plot(feature)
-    return render_template('index.html', plot=bar)
+    result = ''
+    input = ''
+    cat = ''
+    if request.method == 'POST':
+        input = request.form.get('input')
+        cat = request.form.get('category')
+        
+
+        data={
+            "body":input
+        }
+        response = requests.post("https://nlptraining.herokuapp.com" + '/' + cat,json=data)
+        if response.status_code == 200:
+            if 'most_similar_items' in response.json():
+                result = response.json()['most_similar_items']
+            else:
+                result = response.json()['category_predicted']
+        print("----------------------",result)
+    return render_template('index.html',result=result,text=input,category=cat)
 
 def create_plot(feature):
     if feature == 'Bar':
