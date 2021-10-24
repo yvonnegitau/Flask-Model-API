@@ -6,15 +6,25 @@
 - create a folder called models and store your model and countvector
 
 - First install Heroku CLI using this link
+
+```
 https://devcenter.heroku.com/articles/getting-started-with-python#set-up
+```
 
 - Login using this command
+
+```
 heroku login
+```
 
 - Create app on Heroku
-** heroku create
 
+```
+heroku create
+```
 - Push code to heroku
-** git push heroku main
 
+```
+git push heroku main
+```
 
