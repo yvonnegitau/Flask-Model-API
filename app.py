@@ -1,75 +1,56 @@
 from flask import Flask, render_template,request
-import plotly
-import plotly.graph_objs as go
 
+import re
 import pandas as pd
-
+import joblib
 import json
 import requests
 app = Flask(__name__)
 
+modelpath = 'models/logistic.pkl'
+cvpath = 'models/countvector.pkl'
+model =  joblib.load(modelpath)
+countvector = joblib.load(cvpath)
 
-@app.route('/', methods=['post', 'get'])
+@app.route('/', methods=['post','get'])
 def index():
-    result = ''
+    
     input = ''
-    cat = ''
+    predictions = ''
     if request.method == 'POST':
         input = request.form.get('input')
-        cat = request.form.get('category')
+        processed_text = preprocessing(input)  
+        input_vec = countvector.transform([processed_text]) 
+        predictions = predict(input_vec)
+
         
+        
+    return render_template('index.html',result=predictions,text=input)
 
-        data={
-            "body":input
-        }
-        response = requests.post("https://nlptraining.herokuapp.com" + '/' + cat,json=data)
-        if response.status_code == 200:
-            if 'most_similar_items' in response.json():
-                result = response.json()['most_similar_items']
-            else:
-                result = response.json()['category_predicted']
-        print("----------------------",result)
-    return render_template('index.html',result=result,text=input,category=cat)
-
-# def create_plot(feature):
-#     if feature == 'Bar':
-#         N = 40
-#         x = np.linspace(0, 1, N)
-#         y = np.random.randn(N)
-#         df = pd.DataFrame({'x': x, 'y': y}) # creating a sample dataframe
-#         data = [
-#             go.Bar(
-#                 x=df['x'], # assign x as the dataframe column 'x'
-#                 y=df['y']
-#             )
-#         ]
-#     else:
-#         N = 1000
-#         random_x = np.random.randn(N)
-#         random_y = np.random.randn(N)
-
-#         # Create a trace
-#         data = [go.Scatter(
-#             x = random_x,
-#             y = random_y,
-#             mode = 'markers'
-#         )]
+def predict( X):
+    predictions = model.predict(X)
+    return predictions
 
 
-#     graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
+def preprocessing(text):
+  text = text.lower()
+  emoji_pattern = re.compile("["
+                               u"\U0001F600-\U0001F64F"  # emoticons
+                               u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                               u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                               u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                               u"\U00002702-\U000027B0"
+                               u"\U000024C2-\U0001F251"
+                               "]+", flags=re.UNICODE)
+  url_pattern = re.compile(r'https?://\S+|www\.\S+')
+  html_pattern = re.compile('<.*?>')
+  text = emoji_pattern.sub(r'', text)
+  text = url_pattern.sub(r'', text)
+  text = html_pattern.sub(r'', text)
+  text = re.sub(r"[^\w\d'\s]+", '', text)
 
-#     return graphJSON
+  return text
 
-@app.route('/bar', methods=['GET', 'POST'])
-def change_features():
-
-    feature = request.args['selected']
-    graphJSON= create_plot(feature)
-
-
-
-
-    return graphJSON
 
 if __name__ == '__main__':
     app.run()
