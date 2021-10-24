@@ -1,2 +1,4 @@
 __pycache__/*
 .idea/*
+models/countvector.pkl
+models/logistic.pkl
